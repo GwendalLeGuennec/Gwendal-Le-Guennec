@@ -1,0 +1,73 @@
+import numpy as np
+
+def apparition (M) :
+    "opérateur : entrée : matrice ; but : faire apparaître un 2 de façon aléatiore dans le tableau"
+    L=[] #on stocke les positions des zéros
+    for i in range (taille) :
+        for j in range (taille) :
+            if M[i,j] == 0 :
+                L.append((i,j))
+    if L != [] :
+        n=np.random.randint(0,len(L)) # on en tire une au hasard
+        M[L[n]]=2 #on fait apparaître la valeur
+    
+def deplacement (M) :
+    "opérateur : entrée : Matrice ; but : faire un décalage du jeu 2048 vers le haut"
+    compteur=[]
+    for j in range (0, taille) : #on parcourt toutes les colonnes une à une
+        for k in range (taille-1) :  #on décale les valeurs de 1 par 1 : max (taille-1) itérations pour obtenir le décalage total
+            for i in range (1,taille) : #on teste les éléments successivement
+                if M[i,j]!=0 :
+                    if M[i-1,j]==0 :
+                        M[i-1,j],M[i,j]=M[i,j],0
+                    elif M[i,j]==M[i-1,j] and (i,j)not in compteur and (i-1,j) not in compteur : #on fait attention a ce qu'un éléments n'ait pas déjà fusionné (exemple : 2,2,4 ne donne pas 8 mais 4,4,0)
+                        M[i-1,j],M[i,j]=2*M[i,j],0
+                        compteur.append((i-1,j)) #on stocke l'emplacement du fusionné pour ne pas le refusionner (il ne bouge plus)
+                        
+def test (M) :
+    " Matrice -> Bool/'win' : test si la matrice du jeu est finie ou si la partie est encore en cours. Renvoie 'win' si c'est gagné"
+    if 0 in M :
+        return True
+    else :
+        for i in range (0,taille-1) :
+            for j in range (0,taille-1) :
+                if M[i,j]==2048 :
+                    return 'win'
+                if M[i,j]==M[i,j+1] or M[i,j]==M[i+1,j]:
+                    return True
+    return False
+                        
+def jeu (taill) :
+    "programme du jeu 2048 : entrée : taille de la grille"
+    global taille #on définit la taille de façon globale
+    taille = taill
+    M=np.zeros((taille,taille)) #initialisation de la matrice du jeu
+    N=np.eye(taille)
+    while test(M) :
+        if not (M==N).all() : #on vérifie toujours que la matrice ait changée pour ajouter un deux (un blocage ne donne pas d'apparition)
+            apparition (M)
+        N=np.copy(N)  #on stocke la dernière version de la grille pour les tests d'apparition
+        print(M) #on affiche la matrice
+        x='a'
+        while x not in'zqsd' :
+            x=input('entrer une direction : z (haut) q(droite) s(bas) d(droite)') #on demande d'entrer une valeur valable
+        if str(x)== 'z' :
+            deplacement(M) # vers le haut : c'est notre code
+        elif x== 'd' :
+            M=np.fliplr(M) # vers la droite : vers la gauche de la matrice symétrisée gauche droite
+            M=M.T          # vers le haut de la transposée
+            deplacement (M)
+            M=M.T
+            M=np.fliplr(M)
+        elif x== 's' :
+            M=np.flipud(M)  # on symétrise haut-bas
+            deplacement (M)
+            M=np.flipud(M)
+        else :
+            M=M.T  #on transpose la matrice
+            deplacement (M)
+            M=M.T
+    if test(M)=='win' :
+        return 'Félicitations, vous avez gagné !'
+    else :
+        return "Dommage, c'est perdu..."
