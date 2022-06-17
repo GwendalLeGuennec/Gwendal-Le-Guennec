@@ -1,0 +1,326 @@
+import os
+os.chdir("C:/Users/gwend/OneDrive/Documents/Gwendal/Mes programmes") #là où sont situées mes fichiers
+
+#Exercice 2 Coder
+a,A,z,Z=ord('a'),ord('A'),ord('z'),ord('Z')
+
+def decaler (car,nb) :
+    "entrée : un caractère et un déphasage      sortie : nouveau caractère associé"
+    global a,A,z,Z   #création des variables globales pour faciliter les choses
+    c=ord(car)       
+    nb%=26           #on travaille avec un décalage modulo 26
+    if c>=A and c<=Z :      #on doit différencier les cas où le caractère est majuscule de celui où il est minuscule
+        c-=A          #pour travailler modulo 26 sur le nouvel rang
+        c+=nb
+        c%=26         #on s'assure que le nouveau rang est inférieur à 26
+        return chr(A+c)
+    elif c>=a and c<=z :
+        c-=a
+        c+=nb
+        c%=26
+        return chr(a+c)
+    else :
+        return car      #les caractères qui ne sont pas des lettres sont inchangés
+        
+def coder(chaine,nb) :
+    "entrée : chaine de caractère et déphasage     sortie : nouvelle chaine de caractère codée selon le code de César"
+    chaine2=''
+    for e in chaine :
+        chaine2+=decaler(e,nb)   #on décale tous les caractères un par un
+    return chaine2
+
+#EXERCICE 3 : décrypter
+def frequence(chaine) :
+    "entrée : chaîne de caractère   sortie : tableau à 26 entrée correspondant aux fréquences d'apparition des lettres"
+    global a,z
+    Alphabet=list(map( chr, range (a,z+1)))   #liste de l'alphabet
+    chaine=chaine.lower()      #on ne travaille qu'avec des minuscules
+    Tableau=26*[0]             #initialisation du tableau : 26 entrées
+    for e in chaine :
+        if e in Alphabet :
+            c=ord(e)         #on veut savoir l'indice dans l'alphabet de la lettre trouvée
+            c-=a
+            Tableau[c]+=1    #on augmente le compteur
+    return Tableau
+            
+def indiceMax (L) :
+    "entrée : liste   sortie : liste des indices des éléments maximas de la liste"
+    max=0  #initialisation : on suppose au départ que le premier est le plus grand
+    I=[0]
+    for e in range (1,len(L)) :
+        if L[e]==L[max] :
+            I.append(e)       #on peut avoir plusieurs maximas
+        if L[e]>L[max] :      #on teste q'il en existe des plus grands que celui trouvé pour l'instant
+            max=e
+            del I
+            I=[e]        #on réinitialise
+    return I
+    
+def lettremax (chaine) :
+    "entrée : chaîne de caractères    sortie : liste de la lettre (voire des lettres) qui apparaissent le plus de fois dans la chaîne de caractère"
+    return [chr(x+a) for x in indiceMax(frequence(chaine))]  #on reconvertit juste nos indices
+    
+def decrypter (chaine,car='e') :
+    "entrée : chaîne de caractère   sortie : chaîne de cractère décryptée selon le code César"
+    possibilite=[]        #liste qui va contenir les différentes traductions possibles (cas où on a plusieurs indices max)
+    for e in lettremax (chaine) :
+        nb=ord(e)-ord(car)     #on trouve le déphasage
+        possibilite.append(coder(chaine,-nb))        #ce qui nous permet de coder mais avec l'opposé du décalage
+    return possibilite
+        
+#EXERCICE 4 : Coder
+
+    
+def coderFichier(nomfichier,nb) :
+    "entrée : nom du dossier et clé du code de César à appliquer    sortie : rien mais on a créé un dossier contenant le texte codé"
+    fich=open(nomfichier+'.txt','r')     #ouverture du fichier
+    texte=fich.read()                    #on stocke le texte
+    fich.close()
+    fich2=open(nomfichier+'_code.txt','w')  #création d'un nouveau fichier
+    fich2.write(coder(texte,nb))            #on injecte le texte recodé
+    fich2.close()
+    
+#EXERCICE 5 : Décrypter
+def frequenceFichier (nomfichier) :
+    "entrée : nom du fichier    sortie : fréquence des lettres de l'alphabet"
+    fich=open(nomfichier+'.txt','r')
+    texte=fich.read()
+    fich.close()
+    return frequence(texte)      #on stocke le texte dont on sait mesurer la fréquence d'apparition des caractères
+    
+def lettremaxFichier (monfichier) :
+    "entrée : nom du fichier    sortie : lettre la plus occurente"
+    return chr(indiceMax(frequenceFichier(monfichier))[0]+a)   #on renvoie directement la lettre la plus fréquente
+                                                               #on a considérer que le fichier étaitsuffisamment grand pour qu'une lettre ait plus d'occurence que les autres
+
+
+#Remarque : ces deux programmes étaient demandés mais ne sont en réalité pas nécessaires puisqu'on a déjà à disposition toutes les fonctions pour traiter un texte dont on a besoin. Il suffit d'extraire ce texte du fichier.
+    
+def decrypteFichier (monfichier) :
+    "entrée : nom du fichier à décoder    sortie : rien mais on a créé un fichier texte contenant le message décodé"
+    fich=open(monfichier+'.txt','r')
+    texte=fich.read()      #extraction du texte à décrypter
+    fich.close()  
+    fich2=open(monfichier+'_decrypte.txt','w')    #création d'un nouveau fichier
+    if len (decrypter(texte))==1 :
+        fich2.write(decrypter(texte)[0])          #décryptage puis ajout du texte
+    else :
+        fich2.write(decrypter_2(texte))           # si on a besoin de plus de précision, on suppose l'analyse frequentielle du 'e' fiable pour un texte extrait d'un fichier
+    fich2.close()
+    
+    
+#Recherche de plus de précision dans le décodage
+
+    
+#il se peut que les occurences seules des lettres ne suffisent pas, auquel cas on se rabat sur celle des mots pour départager deux possibilités de décryptage
+
+monfichier=open('liste_francais.txt','r')    #liste des mots français
+MotsFrançais=monfichier.read()
+monfichier.close()
+    
+def decrypter_2 (chaine,car='e') :
+    "entrée : chaîne de caractères    sortie : chaîne de caractère traduite"
+    global MotsFrançais
+    Indice_occ=[]    #liste des occurences des mots dans la langue française
+    Possibilité=decrypter(chaine,car)
+    for e in Possibilité :
+        Mots_possibles=e.split()
+        s=0
+        for f in Mots_possibles :    #on teste un à un l'appartenance à la langue française des potentiels mots
+            if f.lower() in MotsFrançais :
+                s+=1
+        Indice_occ.append(s)
+    if Indice_occ[indiceMax(Indice_occ)[0]]==0 :
+        return None                #C'est que cette clé n'était pas la bonne
+    return Possibilité[indiceMax(Indice_occ)[0]]
+
+#l'analyse fréquentielle peut ne pas être bonne, on va tester les autres lettres apparaissant fréquemment en français. d'où cet autre programme.
+
+def decrypter_final_francais (chaine) :
+    "entrée : chaîne de caractère      sortie : chaïne de caractère décodée en français si elle existe"
+    for e in 'eaisnrtoludcmpgbvhfqyxjkwz' :  #on est obligé de testé jusqu'au 'z' : ex : 'pizza'
+        dcode=decrypter_2(chaine,e)
+        if dcode!=None :
+            return dcode
+    
+    
+#Recherche plus poussée : chiffrement par substitution : à chaque lettre de l'alphabet on en associe une autre sans avoir une clé unique (sans déphasage constant). Cette association est une bijection.
+from random import *
+
+def codage_substitution(chaine,cle=[]) :
+    "entrée : chaîne de caractère à coder et clé si on en veut une précise    sortie : message codé"
+    global a,z,A,Z     #on retravaille avec ces valeurs globales
+    code=''
+    if cle==[] :       #supposons que l'on veuille juste codé un message sans avoir nous-même à inventer une clé
+        cle=list(map( chr, range (a,z+1)))   #alphabet
+        shuffle(cle)    #on mélange l'alphabet
+    for e in chaine :
+        if ord(e) in range (a,z+1):#on fait attention aux minuscules/majuscules/caractères spéciaux pour la cohérence du texte.
+            ind=ord(e)-a
+            if type(cle[ind])==str :  #petite disjonction de cas pour mettre des * en cas de clé non claire
+                code+=cle[ind]
+            else :
+                code+='*'
+        elif ord(e) in range (A,Z+1) :
+            ind=ord(e)-A
+            if type(cle[ind])==str :
+                code+=cle[ind].upper()
+            else :
+                code+='*'
+        else :
+            code+=e
+    return code 
+    
+def coderFichier_2(nomfichier,cle=[]) :
+    "entrée : nom du dossier     sortie : rien mais on a créé un dossier contenant le texte codé"
+    fich=open(nomfichier+'.txt','r')     #ouverture du fichier
+    texte=fich.read()                    #on stocke le texte
+    fich.close()
+    fich2=open(nomfichier+'_code_2.txt','w')  #création d'un nouveau fichier
+    fich2.write(codage_substitution(texte,cle))          #on injecte le texte recodé
+    fich2.close()
+    
+def doubleconsonne(mot) :
+    "entrée : chaîne de caractères    sortie : liste des lettres qui sont doublées dans le texte"
+    l=[]
+    for k in range (0,len(mot)-1) :
+        if mot[k]==mot[k+1] and mot[k] not in l:
+            l.append(mot[k])
+    return l
+
+
+
+#Décryptage du codage par substitution :
+
+#Ce programme de décryptage s'appuie uniquement sur la théorie de ce que ferai un humain pour décoder : on commence à trouver quelle lettre code le 'e', le 's' et le 'a' par exemple par une analyse fréquentielle puis on devine les mots. On se propose donc ici de coder ce raisonnemant pour réussir à décrypter ce codage par substitution.
+
+# Remarque : il y a des commentaires au milieu du programme pour indiquer les améliorations qu'on a pu ciblé, ces commentaires proposent une alternative mais celle-ci n'a pas vu le temps d'être concrètisée
+
+def premiere_bij (chaine) :
+    "entrée : chaîne de caractère    sortie : clé potentiele qui aurait pu être utilisée. Elle provient de l'analyse fréquentielle si plusieurs lettres sont probables, elles sont stockées dans une liste"
+    global a
+    cle=26*[0]   
+    frequ=frequence(chaine)
+    k=0
+    F='esainrtoludcmpgbvhfqyxjkwz'   #liste des lettres de l'alphabet les plus fréquentes
+    ind=len(indiceMax(frequ))
+    max=frequ[indiceMax(frequ)[0]]   
+    while k<26 :        #on fait jusqu'à avoir testé les 26 lettres de l'alphabet
+        for i in range (ind) :  #on fait autant de répétitions que de maximas
+            l=F[k]
+            cle[ord(l)-a]=[chr(indiceMax(frequ)[x]+a) for x in range (ind)]  #on stocke les lettres possibles
+            k+=1
+        for i in range (len(frequ)) :
+            if frequ[i]==max :
+                frequ[i]=-1     #on modifie la liste des fréquences pour passer à la fréquence max suivante sans modifier les indices de la liste
+        ind=len(indiceMax(frequ))
+        max=frequ[indiceMax(frequ)[0]] 
+        
+    """
+    #partie qui aurait pu suivre si l'on ne se fie pas à 100% à l'analyse fréquentielle, ce qui va être le cas en pratique 
+    
+    F='nrtoludcmpgbvhfqyxjkwz'
+    for i in range (5) :
+        frequ.remove(frequ[indiceMax(frequ)[0]])
+    for i in range (len(F)) :
+        l=F[i]
+        cle[ord(l)-a]=[chr(frequ[x]+a) for x in range (len(frequ))]"""
+        
+    doublecon=doubleconsonne(chaine)
+    if len(doublecon)!=0 :
+        consonnenondouble='hjkqvx'  #on supprime les lettres que l'on ne peut pas doubler, elles ne sont plus potentielles
+        for e in doublecon :
+            for k in consonnenondouble :
+                if e in cle[ord(k)-a] :
+                    cle[ord(k)-a].remove(e)
+    for k in range(len(cle)) :    #on transforme les listes ne contenant qu'un seul caractère en ce caractère, pour l'ébauche de décodage qui va nous aider dans le décryptage
+        if len(cle[k])==1 :
+            cle[k]=cle[k][0]
+    return cle
+    
+def test_mot (chaine,cle) :
+    "entrée : chaîne de caractère à décoder et potentielle clé    sortie : nouvelle clé potentielle plus fiable"
+    global a,z,MotsFrançais
+    compteur=0
+    for mot in chaine.split() :  #on parcourt les mots de notre texte
+        if compteur == 3 :
+            
+            compteur=0   #Il aurait fallu ici gérer une autre liste en parallèle de notre clé. Cette liste aurait dû comporter des scalaires qui indiqueraient une probabilité que la lettre soit bonne ou non. En effet, l'analyse fréquentielle n'est pas sans erreur (à plus ou moins une lettre dans certains cas). On aurait alors pu modifier la clé en échangeant les bijections de lettre les moins fiables.
+        
+        for lettre in mot :   #on parcourt les lettres de notre mot
+            lettre=lettre.lower()
+            tentative=''
+            if lettre in cle :    #si la lettre est dans la clé c'est qu'on est sûr d'elle et on peut décoder le caractère
+                tentative+=chr(cle.index(lettre)+a)
+            elif ord(lettre) not in range (a,z+1) : #on teste le cas du caractère spécial
+                tentative+=lettre
+            else :
+                tentative+='*'    #sinon on ne connaît pas la lettre et on la remplace par étoile
+        if tentative in MotsFrançais : #si on a pu décoder le mot et qu'il est français, on est content on peut passer à la suite
+            continue
+            
+        liste=tri_mot(MotsFrançais.split(),len(tentative))  #on trie les mots français qui pourraient potentiellement correspondre 
+        for k in range (len(tentative)) :
+            if tentative[k]!='*' :
+                liste=tri_mots2(liste,k,tentative[k])
+        if len(liste)==0 :  #si on a pas trouvé de mots possibles on passe à la suite
+            compteur+=1   #on stocke le nombre de mots ratés
+            continue
+        for k in range (len(tentative)) :
+            if tentative[k]=='*' :
+                lettre_possible=[]  #on va stocker les lettres possibles
+                for possibilite in liste :  #on reparcourt les mots qu'on a isolé
+                    lettre_possible.append(possibilite[k])
+                for j in lettre_possible :  
+                    if j in cle :
+                        lettre_possible.remove(j)  #on supprime la lettre des lettres possibles si on est déjà sûr d'elle
+                for i in range (len(cle)) :
+                    if type(cle[i])==list and chr(a+i) not in lettre_possible and mot[k] in cle[i] :
+                        cle[i].remove(mot[k])  #on supprime les lettres qui ne sont alors pas possibles dans notre bijection
+    return cle
+                        
+            
+def tri_mot(liste,nblettre) :
+    "entrée : liste et un entier n   sortie : liste des éléments de la liste initiale de n caractères"
+    l=[]
+    k=0
+    for mot in liste :
+        if len(mot)==nblettre :
+            l.append(mot)
+    return l
+
+def tri_mots2 (liste,position,lettre) :
+    "entrée : liste, position et lettre     sortie : liste des mots français pocédant cette lettre à cette position"
+    l=[]
+    for e in liste :
+        if position<len(e) :
+            if e[position]==lettre :
+                l.append(e)
+    return l
+        
+#def test
+
+def decrypte_substitu (chaine) :
+    "entrée : chaîne de caractère codée    sortie : clef de décryptage la plus plausible"
+    global a
+    clef=26*[0]   #clé de décryptage : différent de la clé de codage
+    cle1=premiere_bij(chaine)    #on va prendre deux clé de codage potentielle : la deuxième correspond à un passage de plus dans l'algorithme test_mot et est donc théoriquement plus précise. On s'arrête dès qu'on obtient plus de précision supplémentaire
+    cle2=test_mot(chaine,cle1)
+    while cle1!=cle2 :
+        for k in range(len(cle2)) :  #on sort des listes les potentielles caractères qui serait devenus seuls après passage dans le programme test_mot
+            if type(k)==list and len(cle2[k])==1 :
+                cle2[k]=cle2[k][0]
+        cle1,cle2=cle2,test_mot(cle1)
+        print(cle1)
+    for e in range (len(cle1)) :  #la clef de décryptage est la réciproque de la bijection qui a servi à coder
+        clef[ord(cle1[e][0])-a]=chr(e+a)
+    return clef
+
+def decoderFichier_2(nomfichier,cle=[]) :
+    "entrée : nom du dossier     sortie : rien mais on a créé un dossier contenant le texte décodé par la méthode de substitution"
+    fich=open(nomfichier+'.txt','r')     #ouverture du fichier
+    texte=fich.read()                    #on stocke le texte
+    fich.close()
+    fich2=open(nomfichier+'_decode_2.txt','w')  #création d'un nouveau fichier
+    fich2.write(codage_substitution(texte,decrypte_substitu(texte)))          #on injecte le texte recodé à l'envers
+    fich2.close()
