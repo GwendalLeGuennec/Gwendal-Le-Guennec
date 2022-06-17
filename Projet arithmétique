@@ -1,0 +1,235 @@
+from math import *
+from time import *
+
+#PROJET D'ARITHMETIQUE 
+
+"SOUS-PROJET 1 : LE CODE DE FIBONACCI"
+''' le code de Fibonacci consiste à décomposer un nombre en une somme de terme de la suite de fibonacci. On les ordonne par ordre croissant, et on code le chiffre initial en fonction de cette décomposition.
+Par exemple : 30 = 21 + 8 + 1   
+                            les premiers éléments de la liste de fibonacci sont 1, 2, 3, 5, 8, 13, 21
+Ainsi , on associe à cette suite la présence ou non dans la suite de fibonacci :1, 0, 0, 0, 1,  0, 1    (0 représente l'absence et 1 la présence)
+le code de 30 est donc 1000101 auquel on ajoute le terme terminateur 1, car on a jamais deux 1 de suite normalement dans la décomposition.
+Le code de 30 est alors 10001011
+On se propose donc de créer un programme codant un nombre suivant le code de fibonacci et un autre pour décoder une séquence de 0 et 1
+'''
+def fibo1 (n) :
+    'entrée : nombre entier positif entier,  sortie : n-ièm terme de la suite de Fibonacci'
+    assert type(n)==int and n>=0,'le nombre entré doit être un entier positif'
+    if n == 0 :  #on rentre les deux permiers termes 1 et 0 qui défiissent la suite de fibonacci
+        return 0
+    elif n == 1 :
+        return 1
+    else :
+        return fibo1(n-1)+fibo1(n-2)  #on effectue la récurrence : somme des deux termes précédents. Le code va alors calculer pour n-1 et n-2 et ainsi de suite jusqu'à tomber sur un des termes qu'on connait : 0 ou 1
+        
+#cette fonction est récursive, elle met beaucoup de temps de calculer la valeur d'un terme
+
+def fibo(n) :
+    'entrée : nombre entier positif entier,  sortie : n-ièm terme de la suite de Fibonacci'
+    assert type(n)==int and n>=0,'le nombre entré doit être un entier positif'
+    a=0    #on rentre les deux premières valeurs 
+    b=1
+    if n == 0 :
+        return a   #test des deux cas particuliers
+    elif n == 1 :
+        return b
+    for k in range (1,n) : #rang n : (n-1) sommes
+        b,a=b+a,b        #b est notre u(n-1) et a est U(n-2)
+    return b
+    
+def calcul_temps_d_execution (f,n) :
+    'entrée ; fonction f et nombre n   sortie : la durée d exécution de f pour n'
+    assert type(f)==type(fibo) and type(n)==int and n>=0, 'entrée une fonction puis un nombre pour lequel elle est executable (entier)'
+    debut = clock()  #on enregistre le temps au départ
+    f(n)
+    fin = clock()    #puis celui à la fin
+    return fin-debut #on renvoie la différence
+    
+"""REMARQUE : pour calculer le 10000 iem terme de la suite, on met 0,012 secondes avec le premier programme et 0,005s avec l'optimisé : un temps non négligeable."""
+        
+def premiertermfibo1 (n) :
+    'entrée : nombre entier   sortie : liste des n+1 premiers termes de la suite de fibonacci'
+    assert type(n)==int and n>=0,'le nombre entré doit être un entier positif'
+    l=[]
+    for i in range (n+1) :
+        l.append(fibo(i))    #on ajoute successivements les n+1 termes dans une liste
+    return l
+    
+#de la même manière, on cherche à optimiser ce programme, au lieu de recalculer terme par terme, on les mets un par un dans la liste au moment de leur calcul
+        
+def premiertermfibo (n) :
+    'entrée : nombre entier   sortie : liste des n+1 premiers termes de la suite de fibonacci'
+    assert type(n)==int and n>=0,'le nombre entré doit être un entier positif'
+    l=[0,1]                #liste qui contient les deux premiers termes
+    if n == 0 :
+        return [0]         #traitement des deux cas particuliers
+    elif n == 1 :
+        return [0,1]
+    for k in range (2,n+1) :
+        l.append(l[k-1]+l[k-2])   #on ajoute les termes selon la définition de la suite
+    return l
+    
+"""REMARQUE : la différence de temps d'éxecution entre les deux programmes est encore plus flagrante : la première version s'exécute en 15,5s pour les 10000 premiers termes contre 0,017s pour le deuxième"""
+        
+def termeinf (n) :
+    "on cherche le terme de la suite de Fibonacci en dessous de n, ainsi que son rang"
+    assert type(n)==int and n>=0,'le nombre entré doit être un entier positif'
+    k=1
+    if n==0 :              #on traite le cas particulier
+        return 0,0
+    if n==1 :
+        return 1,2         #on choisit ce rang. Dans la suite, on verra que la décomposition ne nécessite en fait jamais deux 1.
+    while fibo (k) <= n :
+        k+=1               
+    return fibo(k-1), k-1
+    
+def decompositionfibo (n) :
+    'entrée : nombre entier positif   sortie : liste contenant deux sous-listes : une première contenant la liste des termes de la suite de fibonacci issu décomposition de notre nombre initial en somme de termes de la suite et une deuxième contenant leur indice'
+    assert type(n)==int and n>0,'le nombre entré doit être un entier strictement positif'
+    l=[[],[]]
+    while n>0 :
+        l[0].append (termeinf(n)[0])   #on ajoute successivement les termes de las uite juste en dessous de n et on effectue la différence
+        l[1].append (termeinf(n)[1])
+        n-=termeinf(n)[0]
+    return l
+    
+#on va coder une première version de codage, le but est de comprendre pourquoi la notation finale est optimale
+def codage_du_nombre_v1 (n) :
+    'entrée ; nombre entier n strictement positif      sortie : séquence de 0 et 1 représentant la présence ou non du terme de la suite de fibonacci pour des indices de termes variant de 1 à l indice du terme le plus grand de la décomposition'
+    assert type(n)==int and n>0,'le nombre entré doit être un entier strictement positif'
+    a=''     #variable qui va contenir la séquence
+    for i in range (1,decompositionfibo(n)[1][0]+1) :  #rang d'indicage
+        if i in decompositionfibo(n)[1] :
+            a+='1'
+        else :
+            a+='0'
+    return a
+    
+#mathématiquement, on peut prouver qu'on a jamais deux '1' consécutifs ni de 1 comme premier caractère, on cherche à le prouver pour les 1000 premiers entiers naturels
+
+def verif_prop (n=10**3) :
+    '''entrée : rang jusqu'auquel il faut vérifier la proposition énoncée ci-dessus   sortie : booléen : oui ou non'''
+    assert type(n)==int and n>0,'le nombre entré doit être un entier strictement positif'
+    for k in range (1,n+1) :
+        for i in range (len(codage_du_nombre_v1(k))-1) :
+            if codage_du_nombre_v1(k)[i]==codage_du_nombre_v1(k)[i+1]=='1' or codage_du_nombre_v1(k)[0]!='0' :
+                return False
+    return True
+'''remarque : ce pregramme est vraiment très long par la multitude calculs et de tests qu'il doit effectuer, le code de 50 est déjà très long alors celui de 1000 est immense. Pourtant ce code revoie bien 'True' '''
+
+# on peut donc créer un terme terminateur : '1', et supprimer le premier 0 ce qui donne :
+def codage_du_nombre_v2 (n) :
+    'entrée ; nombre entier n strictement positif      sortie : code de fibonacci pour ce nombre'
+    assert type(n)==int and n>0,'le nombre entré doit être un entier strictement positif'
+    a=''
+    for i in range (2,decompositionfibo(int(n))[1][0]+1) :  # maintenant : on initialise au rang 2
+        if i in decompositionfibo(int(n))[1] :
+            a+='1'
+        else :
+            a+='0'
+    return a+'1'     #on rajoute aussi le terme 1 terminateur
+    
+def verification_sequ (a) :
+    'entrée chaîne de caractère   sortie : booléen : elle ne contient que des 1 ou 0'
+    #ce programme va permettre de vérifier la condition dans le décodage des séquences
+    assert type(a)==str , 'ce programme ne teste que des chaînes de caractères'
+    for e in a :
+        if e=='1' or e == '0' :   #on teste successivement tous les termes de la séquence
+            continue
+        else :
+            return False
+    return True
+    
+def decodage_v1 (a) :
+    'entrée : chaïne de caractère contenant des 0 et des 1   sortie : nombre associé à cette séquence'
+    #ce premier décodage est basique, on ne prend pas en compte si ce code peut émerger naturellement et si deux termes égaux à 1 se suivent
+    assert type (a)==str and verification_sequ(a), 'la chaîne à décoder doit être valide'
+    n=0  #terme qui va contenir le nombre décodé
+    m=premiertermfibo(len(a)+1)[2:]   #liste des termes de la suite de fibonacci qui va servir pour la recomposition du nombre
+    for k in range (len(a)) :
+        if a[k]=='1' :
+            n+=m[k]
+    if n==0 :
+        return None   #cas particulier : le 0 n'a pas de code associée
+    return n
+    
+def traitement_initial (a) :
+    "entrée : chaîne de caractère contenant des 0 ou des 1   sortie : liste de chaîne de caractères valides qui auraient pu découler d un codage de fibonacci qui sont présentes dans la chaîne rentrée. Autrement dit on prend en compte le terme terminateur, on l'enlève et si il y a encore des termes après ces deux 1, on prend en compte ceux-ci dans une nouvelle chaîne"
+    assert type(a)==str  and verification_sequ(a)
+    l=[]    #liste qui contient ces chaînes de caractère
+    b=0     #variable égale au rang de la chaîne caractère initiale qui sera le premier de la nouvelle chaîne valide
+    for k in range (len(a)-1) :    #on a besoin de parcourir les indices
+        if a[k]==a[k+1]=='1'and k>=b :   #première condition : test de deux 1 consecutifs : arrêt de la chaîne
+        #deuxième condition : on ne retombe pas sur le terme terminateur qu'on vient d'enlevr. En effet il est encore présent dans la chaîne de départ, si on a trois '1' de suite, on enlève le deuxième et le troisième ne correspond plus à un '1' terminateur
+            l.append(a[b:k+1])   #le dernier terme est le k-ième
+            b=k+2                #le potentiel nouveau terme de la liste suivante est le (k+2)-ième
+    return l
+        
+def decodage_v2 (a) :
+    "entrée : chaîne de '0' et '1'   sortie : liste contenant les nombres codés en code de fibonacci contenus dans cette séquence"
+    l=[]
+    for e in traitement_initial(a) :
+        l.append(decodage_v1(e))
+    return l
+
+#je me rend compte que mon projet s'est beaucoup approché de la cryptographie et s'est éloigné de l'arithmétique. Mais pour 'm'amuser' j'ai codé la décomposition en somme avant d'en chercher une utilité dans un souci d'intégrité du projet
+
+    
+
+
+    
+"SOUS-PROJET 2 : ETUDE DES NOMBRES PREMIERS"
+    
+def Premier (n) :
+    "teste si le nombre n est premier"
+    assert type(n)==int and n>=0,'le nombre doit être un entier positif'
+    if n == 1 or n==0: #test des cas particuliers
+        return False
+    for k in range (2, int(sqrt(n)+1)) : #intervalle optimisé : si n est divisible, un des diviseurs est au moins dans cet intervalle
+        if n%k==0 :
+            return False
+    return True
+        
+"idée : tracer la courbe, étudier les quotients, phi nombre univers ?"
+
+def decomposition (n) :
+    "entrée : nombre entier positif n   sortie : liste des doublets contenant les facteurs premiers de la décomposition de n en facteurs premiers et leur exposant"
+    assert type(n)==int and n>1, 'on ne décompose que des entiers plus grand que 1'
+    l=[] 
+    if Premier(n) :                      #cas particulier : un seul diviseur premier : lui-même
+        return [(n,1)]
+    for k in range (2, n) : #intervalle optimisé, idem précédent. On teste les potentielles valeurs.
+        a=0                              #initialisation variable qui compte le nombre de fois où je peux diviser n par k
+        while n%k==0 :                   #n peut être divisible plusieurs fois par k, d'où cette boucle pour le vérifier
+            a+=1
+            n//=k             #on enlève la valeur du diviseur qu'on vient de trouver pour chercher les autres dans le quotient
+            if n==1 :
+                break         #si n était égal à 1, on a fini la décomposition, on peut passer à la suite
+        if a!=0 :
+            l.append((k,a)) 
+    return l
+    
+def crible (n) :
+    "renvoie la liste de tous les nombres premiers inférieurs à n"
+    assert type(n)==int and n>=0, 'le nombre entré doit être entier'
+    l=[]
+    for i in range (2,n+1) :
+        if Premier (i) : #on teste les différentes valeurs potentielles avant de les ajouter à notre liste si elles s'avèrent être des nombres premiers
+            l.append(i)
+    return l
+#J'ai compris en cours que je n'avais pas du tout appliqué la méthode du crible d'Eratosthène
+
+def crible_Erato(n) :
+    "renvoie la liste de tous les nombres premiers inférieurs à n via la méthode d'Eratosthène"
+    assert type(n)==int and n>0, 'le nombre entré doit être strictement positif'
+    l=[True for i in range (n)]  #liste de 100 True
+    l[0]=False                   #1 n'est pas premier
+    p=[]                         #liste qui va contenir les nombres premiers
+    for i in range (n) :         #on parcourt la liste des True et False
+        if l[i]==True :
+            p.append(i+1)        # on ajoute les nombres qui ne sont pas multiples de premiers
+            a=(i+1)**2 - 1       #on 'barre' ceux qui sont multiples de ce premier en changeant le terme multiple en False
+            while a <n :
+                l[a]=False
+                a+=i+1
+    return p
